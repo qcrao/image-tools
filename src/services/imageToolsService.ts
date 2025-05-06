@@ -40,6 +40,13 @@ export class ImageToolsService {
         opacity: 1;
       }
       
+      /* Make tools visible on mobile devices */
+      @media (max-width: 768px) {
+        .${this.TOOLS_CONTAINER_CLASS} {
+          opacity: 1;
+        }
+      }
+      
       .${this.TOOLS_CONTAINER_CLASS} button {
         background: none;
         border: none;
@@ -56,6 +63,11 @@ export class ImageToolsService {
       
       .${this.TOOLS_CONTAINER_CLASS} button:hover {
         background-color: rgba(255, 255, 255, 0.2);
+      }
+      
+      /* Make images clickable for zoom */
+      .roam-article img {
+        cursor: pointer;
       }
       
       .image-zoom-modal {
@@ -166,6 +178,12 @@ export class ImageToolsService {
       console.log("Could not set crossOrigin attribute", e);
     }
 
+    // Make the image itself zoomable with click (like native Roam behavior)
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.openImageInModal(img.src);
+    });
+
     // Create wrapper if necessary
     const parent = img.parentElement;
     if (!parent) return;
@@ -225,13 +243,13 @@ export class ImageToolsService {
    * Opens an image in a modal for zooming
    */
   private static openImageInModal(src: string): void {
+    // Preload image to improve performance
+    const preloadImage = new Image();
+    preloadImage.src = src;
+
     // Create modal container
     const modal = document.createElement("div");
     modal.className = "image-zoom-modal";
-
-    // Create image element
-    const img = document.createElement("img");
-    img.src = src;
 
     // Create close button
     const closeButton = document.createElement("button");
@@ -241,6 +259,29 @@ export class ImageToolsService {
       document.body.removeChild(modal);
     });
 
+    // Create image element
+    const img = document.createElement("img");
+    if (preloadImage.complete) {
+      // Image already loaded, use it immediately
+      img.src = src;
+      modal.appendChild(img);
+      modal.appendChild(closeButton);
+      document.body.appendChild(modal);
+    } else {
+      // Show loading indicator
+      modal.innerHTML =
+        '<div style="color: white; font-size: 24px;">Loading image...</div>';
+      document.body.appendChild(modal);
+
+      // When image is loaded, update the modal
+      preloadImage.onload = () => {
+        img.src = src;
+        modal.innerHTML = "";
+        modal.appendChild(img);
+        modal.appendChild(closeButton);
+      };
+    }
+
     // Add click handler to close modal when clicking outside the image
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
@@ -248,10 +289,14 @@ export class ImageToolsService {
       }
     });
 
-    // Add elements to modal and modal to body
-    modal.appendChild(img);
-    modal.appendChild(closeButton);
-    document.body.appendChild(modal);
+    // Add keyboard support for closing
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        document.body.removeChild(modal);
+        document.removeEventListener("keydown", keyHandler);
+      }
+    };
+    document.addEventListener("keydown", keyHandler);
   }
 
   /**
