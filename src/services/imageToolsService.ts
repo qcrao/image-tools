@@ -1,5 +1,3 @@
-import { iconSize, iconOpacity } from "../settings";
-
 /**
  * Service for adding interactive tools to images in Roam Research
  */
@@ -19,12 +17,6 @@ export class ImageToolsService {
       existingStyles.remove();
     }
 
-    // Get icon size in pixels
-    const iconSizeInPx = this.getIconSizeInPx();
-
-    // Get opacity in decimal
-    const opacityInDecimal = parseInt(iconOpacity) / 100;
-
     // Create style element
     const styleElement = document.createElement("style");
     styleElement.id = "image-tools-styles";
@@ -34,8 +26,8 @@ export class ImageToolsService {
         top: 8px;
         left: 8px;
         display: flex;
-        gap: ${iconSizeInPx / 4}px;
-        background-color: rgba(0, 0, 0, ${opacityInDecimal});
+        gap: 4px;
+        background-color: rgba(0, 0, 0, 0.5);
         border-radius: 4px;
         padding: 4px 8px;
         opacity: 0;
@@ -58,7 +50,7 @@ export class ImageToolsService {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: ${iconSizeInPx}px;
+        font-size: 18px;
         line-height: 1;
       }
       
@@ -103,22 +95,6 @@ export class ImageToolsService {
       this.injectCustomStyles();
     });
   }
-
-  /**
-   * Convert icon size string to pixels
-   */
-  private static getIconSizeInPx(): number {
-    switch (iconSize) {
-      case "small":
-        return 14;
-      case "large":
-        return 22;
-      case "medium":
-      default:
-        return 18;
-    }
-  }
-
   /**
    * Creates an observer that watches for new images being added to the page
    */

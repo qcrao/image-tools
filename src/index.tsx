@@ -1,6 +1,5 @@
 // src/index.tsx
 import { ImageToolsService } from "./services/imageToolsService";
-import { loadInitialSettings, initPanelConfig } from "./settings";
 
 // Define a type for MutationObserver if it's not recognized
 declare global {
@@ -30,12 +29,6 @@ const onload = async ({ extensionAPI }: { extensionAPI: any }) => {
   console.log("Image Tools plugin loading...");
 
   try {
-    // Load settings
-    loadInitialSettings(extensionAPI);
-
-    // Initialize panel config
-    await extensionAPI.settings.panel.create(initPanelConfig(extensionAPI));
-
     // Initialize custom styles
     ImageToolsService.injectCustomStyles();
 
