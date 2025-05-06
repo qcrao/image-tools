@@ -1,77 +1,69 @@
-# Last Year Today
+# Roam Image Tools
 
-Last Year Today is a Roam Research extension that automatically shows you what you wrote on the same day in previous years. It helps you reflect on your past thoughts, track your progress, and rediscover valuable insights from your journal entries.
-
-![historical-pages](https://github.com/qcrao/last-year-today/blob/main/assets/historical-pages.png?raw=true)
+Roam Image Tools is a Roam Research extension that adds convenient tools to images, making it easier to interact with images on both desktop and mobile devices.
 
 ## Features
 
-1. **Automatic Daily Updates**
+1. **Image Zoom**
 
-   - Automatically opens your historical pages at a configurable time each day
-   - Displays entries from previous years in the right sidebar
-   - Customizable number of years to look back (1-10 years)
+   - Click the eye icon (👁️) to open images in a fullscreen modal
+   - Perfect for mobile users who can't directly click to zoom
+   - Easy-to-use modal with click-outside-to-close functionality
 
-2. **Visual Distinction**
+2. **Copy to Clipboard**
 
-   - Historical pages are visually distinct with custom styling
-   - Beautiful borders and hourglass icons for easy identification
-   - Clean and intuitive interface
+   - Click the clipboard icon (📋) to copy an image to your clipboard
+   - Quickly reuse images in other applications or notes
+   - No need to download and re-upload
 
-3. **Flexible Controls**
-   - Command palette integration for manual control
-   - Open and close historical pages on demand
-   - Configurable settings through the Roam Research settings panel
+3. **Quick Save**
+
+   - Click the save icon (💾) to download the image
+   - Save images directly to your device
+   - No need to right-click and use the browser menu
+
+4. **Customizable Appearance**
+   - Adjust icon size (small, medium, large)
+   - Control opacity (0-100%)
+   - Seamless integration with Roam's interface
 
 ## Installation
 
 1. In Roam Research, go to Settings > Roam Depot > Community extensions
-2. Search for "Last Year Today"
+2. Search for "Roam Image Tools"
 3. Click "Install"
 
 ## Configuration
 
 After installation, configure the extension in the Roam Research settings panel:
 
-1. **Years Back**: Choose how many years to look back (1-10 years)
+1. **Icon Size**: Choose the size of the image tool icons
 
-   - Default: 1 year
-   - Maximum: 10 years
+   - Options: small, medium, large
+   - Default: medium
 
-2. **Hour to Open Last Year Today Page**: Set when the historical pages should automatically open
-   - Default: 9 AM
-   - Range: 0-23 (24-hour format)
-
-![settings](https://github.com/qcrao/last-year-today/blob/main/assets/settings.png?raw=true)
+2. **Icon Opacity**: Set the opacity of the image tool interface
+   - Range: 0-100%
+   - Default: 50%
 
 ## Usage
 
-### Automatic Updates
+The image tools appear in the top-left corner of any image in your Roam database:
 
-The extension will automatically open your historical pages in the right sidebar at your configured time each day. Each historical page will be displayed in chronological order, from oldest to newest.
+- **Eye Icon (👁️)**: Opens the image in a fullscreen modal for better viewing
+- **Clipboard Icon (📋)**: Copies the image to your clipboard (identical to the browser's "Copy Image" function)
+- **Save Icon (💾)**: Downloads the image to your device (identical to the browser's "Save Image" function)
 
-### Manual Controls
+The tools are especially useful for:
 
-You can also control the extension manually through the command palette (Cmd/Ctrl + P):
+- Mobile users who can't easily zoom in on images
+- Anyone who frequently needs to copy or save images without using the right-click menu
+- Users who want quick access to common image operations
 
-1. **Open Last Year Today**
+## Troubleshooting
 
-   - Opens historical pages in the right sidebar
-   - Shows pages from previous years for the current date
+If the image tools don't appear on new images, you can use the "Reinitialize Image Tools" command from the command palette (Cmd/Ctrl + P).
 
-2. **Close Last Year Today**
-   - Closes all historical page windows
-   - Cleans up the sidebar
+## Feedback and Support
 
-![command-palette](https://github.com/qcrao/last-year-today/blob/main/assets/command-palette.png?raw=true)
-
-### Visual Indicators
-
-Historical pages are marked with:
-
-- Distinctive borders
-- Hourglass icon (⏳)
-- Highlighted date headers
-- Subtle shadows for depth
-
-![historical-page](https://github.com/qcrao/last-year-today/blob/main/assets/historical-page.png?raw=true)
+If you encounter any issues or have suggestions for improvement, please file an issue on the GitHub repository or contact the developer.

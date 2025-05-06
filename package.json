@@ -1,5 +1,5 @@
 {
-  "name": "last-year-today",
+  "name": "roam-image-tools",
   "module": "index.ts",
   "type": "module",
   "scripts": {

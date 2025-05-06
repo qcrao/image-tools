@@ -1,74 +1,70 @@
-const DEFAULT_YEARS_BACK = 3;
-const DEFAULT_DAILY_UPDATE_HOUR = 9;
+// Default settings
+const DEFAULT_ICON_SIZE = "medium";
+const DEFAULT_ICON_OPACITY = "50";
 
-export let yearsBack = DEFAULT_YEARS_BACK;
-export let dailyUpdateHour = DEFAULT_DAILY_UPDATE_HOUR;
+// Settings variables
+export let iconSize = DEFAULT_ICON_SIZE;
+export let iconOpacity = DEFAULT_ICON_OPACITY;
 
+/**
+ * Load initial settings from Roam API
+ */
 export function loadInitialSettings(extensionAPI: any) {
-  const savedYearsBack = extensionAPI.settings.get("years-back");
-  yearsBack = savedYearsBack ? parseInt(savedYearsBack) : DEFAULT_YEARS_BACK;
+  const savedIconSize = extensionAPI.settings.get("icon-size");
+  iconSize = savedIconSize || DEFAULT_ICON_SIZE;
 
-  const savedUpdateHour = extensionAPI.settings.get(
-    "hour-to-open-last-year-today-page"
-  );
-
-  dailyUpdateHour = savedUpdateHour
-    ? parseInt(savedUpdateHour)
-    : DEFAULT_DAILY_UPDATE_HOUR;
+  const savedIconOpacity = extensionAPI.settings.get("icon-opacity");
+  iconOpacity = savedIconOpacity || DEFAULT_ICON_OPACITY;
 }
 
+/**
+ * Initialize settings panel configuration
+ */
 export function initPanelConfig(extensionAPI: any) {
   return {
-    tabTitle: "Last Year Today",
+    tabTitle: "Image Tools",
     settings: [
       {
-        id: "years-back",
-        name: "Years Back",
-        description: `Number of years to look back (default: ${DEFAULT_YEARS_BACK}, max: 10)`,
+        id: "icon-size",
+        name: "Icon Size",
+        description: "Size of image tool icons",
         action: {
-          type: "input",
+          type: "select",
+          items: ["small", "medium", "large"],
           onChange: (evt: any) => {
-            console.log("yearsBack onChange", evt);
             if (!evt?.target?.value) return;
 
-            const value = parseInt(evt.target.value);
-            yearsBack = isNaN(value)
-              ? DEFAULT_YEARS_BACK
-              : Math.min(Math.max(value, 1), 10);
+            iconSize = evt.target.value;
 
             Promise.resolve(
-              extensionAPI.settings.set("years-back", yearsBack.toString())
+              extensionAPI.settings.set("icon-size", iconSize)
             ).then(() => {
-              console.log("yearsBack settingsChanged to", yearsBack);
+              window.dispatchEvent(
+                new CustomEvent("imageTools:settings:changed")
+              );
             });
           },
         },
       },
       {
-        id: "hour-to-open-last-year-today-page",
-        name: "Hour to Open Last Year Today Page",
-        description: `Hour of the day to open Last Year Today page (0-23, default: ${DEFAULT_DAILY_UPDATE_HOUR})`,
+        id: "icon-opacity",
+        name: "Icon Opacity",
+        description: "Opacity of image tool icons (0-100)",
         action: {
           type: "input",
           onChange: (evt: any) => {
-            console.log("dailyUpdateHour onChange", evt);
             if (!evt?.target?.value) return;
 
             const value = parseInt(evt.target.value);
-            dailyUpdateHour = isNaN(value)
-              ? DEFAULT_DAILY_UPDATE_HOUR
-              : Math.min(Math.max(value, 0), 23);
+            iconOpacity = isNaN(value)
+              ? DEFAULT_ICON_OPACITY
+              : Math.min(Math.max(value, 0), 100).toString();
 
             Promise.resolve(
-              extensionAPI.settings.set(
-                "hour-to-open-last-year-today-page",
-                dailyUpdateHour.toString()
-              )
+              extensionAPI.settings.set("icon-opacity", iconOpacity)
             ).then(() => {
               window.dispatchEvent(
-                new CustomEvent(
-                  "lastYearToday:hour-to-open-last-year-today-page:settingsChanged"
-                )
+                new CustomEvent("imageTools:settings:changed")
               );
             });
           },
