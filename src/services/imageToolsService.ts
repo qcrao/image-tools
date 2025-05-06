@@ -380,62 +380,189 @@ export class ImageToolsService {
    */
   private static saveImage(img: HTMLImageElement): void {
     try {
-      // Method 1: Using download attribute (works in most modern browsers)
-      const link = document.createElement("a");
-      link.href = img.src;
-      link.download = "image-" + new Date().getTime() + ".png";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Create a canvas to handle potential CORS issues
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-      // Method 2: If method 1 fails, try simulating right-click and "Save Image"
-      if (!link.download) {
-        // Simulate right click
-        const mouseEvent = new MouseEvent("contextmenu", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 2,
-          buttons: 2,
-        });
+      // Set canvas dimensions to match the image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
 
-        // Store the original handler
-        const originalOnContextMenu = img.oncontextmenu;
+      // Draw the image onto the canvas
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
 
-        // Override temporarily
-        img.oncontextmenu = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        // Try to get the image name from the src URL
+        let filename = "roam-image-" + new Date().getTime() + ".png";
+        try {
+          // Extract filename from URL if possible
+          const urlParts = img.src.split("/");
+          const possibleFilename = urlParts[urlParts.length - 1].split("?")[0];
+          if (
+            possibleFilename &&
+            possibleFilename.length > 0 &&
+            possibleFilename.indexOf(".") !== -1
+          ) {
+            filename = possibleFilename;
+          }
+        } catch (e) {
+          console.log("Could not extract filename from URL", e);
+        }
 
+        // Try multiple methods to ensure download works
+
+        // Method 1: Most direct method using a data URL
+        try {
+          // Convert canvas to data URL
+          let dataUrl = canvas.toDataURL("image/png");
+
+          // Create download link
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = filename;
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+
+          // Clean up
           setTimeout(() => {
-            // Try to find and click "Save Image" in context menu
-            const menuItems = Array.from(
-              document.querySelectorAll('div[role="menuitem"]')
-            );
-            const saveImageMenuItem = menuItems.find(
-              (item) =>
-                item.textContent?.includes("Save Image") ||
-                item.textContent?.includes("Save image")
-            );
-
-            if (saveImageMenuItem) {
-              (saveImageMenuItem as HTMLElement).click();
-              console.log("Save image menu item clicked");
-            }
-          }, 10);
-
-          // Restore original handler
-          setTimeout(() => {
-            img.oncontextmenu = originalOnContextMenu;
+            URL.revokeObjectURL(dataUrl);
+            document.body.removeChild(link);
           }, 100);
-        };
 
-        // Trigger context menu
-        img.dispatchEvent(mouseEvent);
+          console.log("Image downloaded using data URL method");
+          return;
+        } catch (e) {
+          console.log("Data URL download failed, trying blob method", e);
+        }
+
+        // Method 2: Using Blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+
+            // Clean up
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+              document.body.removeChild(link);
+            }, 100);
+
+            console.log("Image downloaded using blob method");
+          } else {
+            console.error("Failed to create blob from canvas");
+            this.fallbackSaveImage(img);
+          }
+        });
+      } else {
+        console.error("Failed to get canvas context");
+        this.fallbackSaveImage(img);
       }
     } catch (error) {
       console.error("Failed to save image:", error);
+      this.fallbackSaveImage(img);
     }
+  }
+
+  /**
+   * Fallback method to save an image
+   */
+  private static fallbackSaveImage(img: HTMLImageElement): void {
+    try {
+      // Fallback Method 1: Direct download using original image source
+      const link = document.createElement("a");
+      link.href = img.src;
+
+      // Try to extract filename from URL
+      let filename = "roam-image-" + new Date().getTime() + ".png";
+      try {
+        const urlParts = img.src.split("/");
+        const possibleFilename = urlParts[urlParts.length - 1].split("?")[0];
+        if (
+          possibleFilename &&
+          possibleFilename.length > 0 &&
+          possibleFilename.indexOf(".") !== -1
+        ) {
+          filename = possibleFilename;
+        }
+      } catch (e) {
+        console.log("Could not extract filename from URL", e);
+      }
+
+      link.download = filename;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
+
+      console.log("Image downloaded using direct source method");
+    } catch (e) {
+      console.error("All download methods failed", e);
+
+      // Last resort: Simulate right-click and save
+      this.rightClickSaveImage(img);
+    }
+  }
+
+  /**
+   * Last resort method to save an image via context menu
+   */
+  private static rightClickSaveImage(img: HTMLImageElement): void {
+    // Simulate right click on image
+    const mouseEvent = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 2,
+      buttons: 2,
+    });
+
+    // Store the original image
+    const originalOnContextMenu = img.oncontextmenu;
+
+    // Override the context menu handler temporarily
+    img.oncontextmenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Try to find and click "Save Image" in context menu
+      setTimeout(() => {
+        const menuItems = Array.from(
+          document.querySelectorAll('div[role="menuitem"]')
+        );
+        const saveImageMenuItem = menuItems.find(
+          (item) =>
+            item.textContent?.includes("Save Image") ||
+            item.textContent?.includes("Save image")
+        );
+
+        if (saveImageMenuItem) {
+          (saveImageMenuItem as HTMLElement).click();
+          console.log("Save image menu item clicked");
+        } else {
+          console.error("Could not find Save Image menu item");
+        }
+      }, 10);
+
+      // Restore original handler
+      setTimeout(() => {
+        img.oncontextmenu = originalOnContextMenu;
+      }, 100);
+    };
+
+    // Trigger the context menu
+    img.dispatchEvent(mouseEvent);
   }
 
   /**
