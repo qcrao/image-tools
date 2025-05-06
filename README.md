@@ -22,29 +22,11 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
    - Save images directly to your device
    - No need to right-click and use the browser menu
 
-4. **Customizable Appearance**
-   - Adjust icon size (small, medium, large)
-   - Control opacity (0-100%)
-   - Seamless integration with Roam's interface
-
 ## Installation
 
 1. In Roam Research, go to Settings > Roam Depot > Community extensions
-2. Search for "Roam Image Tools"
+2. Search for "Image Tools"
 3. Click "Install"
-
-## Configuration
-
-After installation, configure the extension in the Roam Research settings panel:
-
-1. **Icon Size**: Choose the size of the image tool icons
-
-   - Options: small, medium, large
-   - Default: medium
-
-2. **Icon Opacity**: Set the opacity of the image tool interface
-   - Range: 0-100%
-   - Default: 50%
 
 ## Usage
 
@@ -66,4 +48,4 @@ If the image tools don't appear on new images, you can use the "Reinitialize Ima
 
 ## Feedback and Support
 
-If you encounter any issues or have suggestions for improvement, please file an issue on the GitHub repository or contact the developer.
+If you encounter any issues or have suggestions for improvement, please file an issue on the GitHub repository or contact the developer by email at qcrao@gmail.com.
