@@ -178,12 +178,6 @@ export class ImageToolsService {
       console.log("Could not set crossOrigin attribute", e);
     }
 
-    // Make the image itself zoomable with click (like native Roam behavior)
-    img.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.openImageInModal(img.src);
-    });
-
     // Create wrapper if necessary
     const parent = img.parentElement;
     if (!parent) return;
@@ -243,6 +237,47 @@ export class ImageToolsService {
    * Opens an image in a modal for zooming
    */
   private static openImageInModal(src: string): void {
+    // Find the original image in the DOM
+    const allImages = Array.from(
+      document.querySelectorAll(".roam-article img")
+    ) as HTMLImageElement[];
+    const targetImage = allImages.find((img) => img.src === src);
+
+    if (targetImage) {
+      // Remove our click handler temporarily to avoid infinite loops
+      const originalClickHandlers = targetImage.onclick;
+      targetImage.onclick = null;
+
+      // Create and dispatch a native mouse click event
+      const clickEvent = new MouseEvent("click", {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        clientX:
+          targetImage.getBoundingClientRect().left +
+          targetImage.offsetWidth / 2,
+        clientY:
+          targetImage.getBoundingClientRect().top +
+          targetImage.offsetHeight / 2,
+      });
+
+      // Dispatch the click event
+      targetImage.dispatchEvent(clickEvent);
+
+      // Restore our click handler after a short delay
+      setTimeout(() => {
+        targetImage.onclick = originalClickHandlers;
+      }, 100);
+    } else {
+      // Fallback to our custom implementation if image not found
+      this.showCustomZoomModal(src);
+    }
+  }
+
+  /**
+   * Shows custom zoom modal for when Roam's native zoom doesn't work
+   */
+  private static showCustomZoomModal(src: string): void {
     // Preload image to improve performance
     const preloadImage = new Image();
     preloadImage.src = src;
