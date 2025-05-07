@@ -1,5 +1,9 @@
 # Roam Image Tools
 
+![In mac](https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mac.gif?raw=true)
+
+![In mobile](https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mobile.gif?raw=true)
+
 Roam Image Tools is a Roam Research extension that adds convenient tools to images, making it easier to interact with images on both desktop and mobile devices.
 
 ## Features
@@ -30,7 +34,7 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
 
 ## Usage
 
-The image tools appear in the top-left corner of any image in your Roam database:
+The image tools appear in the top-left(bottom-left on mobile) corner of any image in your Roam database:
 
 - **Eye Icon (👁️)**: Opens the image in a fullscreen modal for better viewing
 - **Clipboard Icon (📋)**: Copies the image to your clipboard (identical to the browser's "Copy Image" function)
