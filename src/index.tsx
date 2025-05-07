@@ -10,6 +10,13 @@ declare global {
 
 let imageToolsObserver: MutationObserver | null = null;
 
+/**
+ * Checks if the current environment is running on a mobile device
+ */
+const isMobileDevice = (): boolean => {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+};
+
 const initializeImageTools = () => {
   // Remove any previous observer
   if (imageToolsObserver) {
@@ -22,7 +29,9 @@ const initializeImageTools = () => {
   // Set up observer to watch for new images
   imageToolsObserver = ImageToolsService.createImageObserver();
 
-  console.log("Image tools initialized successfully!");
+  // Log details about the current environment
+  const isMobile = isMobileDevice();
+  console.log(`Image tools initialized successfully! Mobile device: ${isMobile}`);
 };
 
 const onload = async ({ extensionAPI }: { extensionAPI: any }) => {
@@ -40,6 +49,22 @@ const onload = async ({ extensionAPI }: { extensionAPI: any }) => {
       label: "Reinitialize Image Tools",
       callback: () => initializeImageTools(),
     });
+
+    // Special handling for mobile devices - reinitialize after short delay
+    // to ensure all images are captured after mobile app loads
+    if (isMobileDevice()) {
+      // Initial delay for immediate load
+      setTimeout(() => {
+        console.log("Mobile detected - running first reinitialization");
+        initializeImageTools();
+        
+        // Second delay for when page is fully loaded
+        setTimeout(() => {
+          console.log("Mobile detected - running second reinitialization");
+          initializeImageTools();
+        }, 2000);
+      }, 500);
+    }
 
     console.log("Image Tools plugin loaded successfully!");
   } catch (error) {
