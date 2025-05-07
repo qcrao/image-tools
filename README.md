@@ -1,8 +1,15 @@
 # Roam Image Tools
 
-![In mac](https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mac.gif?raw=true)
-
-![In mobile](https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mobile.gif?raw=true)
+<table>
+  <tr>
+    <td><img src="https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mobile.gif?raw=true" width="400" /></td>
+    <td><img src="https://github.com/qcrao/image-tools/blob/main/assets/image-tools-mac.gif?raw=true" width="800" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Mobile</b></td>
+    <td align="center"><b>Mac</b></td>
+  </tr>
+</table>
 
 Roam Image Tools is a Roam Research extension that adds convenient tools to images, making it easier to interact with images on both desktop and mobile devices.
 
