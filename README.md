@@ -9,7 +9,6 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
    - Available only on mobile devices
    - Click the eye icon (👁️) to open images in a fullscreen modal
    - Perfect for mobile users who can't directly click to zoom
-   - Easy-to-use modal with click-outside-to-close functionality
 
 2. **Copy to Clipboard (Desktop Only)**
 
@@ -17,7 +16,6 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
    - Click the clipboard icon (📋) to copy an image to your clipboard
    - Visual feedback shows when image is successfully copied
    - Quickly reuse images in other applications or notes
-   - No need to download and re-upload
 
 ## Installation
 
