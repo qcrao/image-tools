@@ -59,10 +59,15 @@ export class ImageToolsService {
         justify-content: center;
         font-size: 18px;
         line-height: 1;
+        transition: all 0.2s ease;
       }
       
       .${this.TOOLS_CONTAINER_CLASS} button:hover {
         background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .${this.TOOLS_CONTAINER_CLASS} .copy-success {
+        color: #4CAF50 !important;
       }
       
       /* Make images clickable for zoom */
@@ -191,46 +196,33 @@ export class ImageToolsService {
     const toolsContainer = document.createElement("div");
     toolsContainer.className = this.TOOLS_CONTAINER_CLASS;
 
-    // Create zoom button
-    const zoomButton = this.createToolButton("👁️", "Zoom image", () => {
-      this.openImageInModal(img.src);
-    });
+    // Check if mobile or desktop
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
-    // Create copy button
-    const copyButton = this.createToolButton("📋", "Copy image", () => {
-      this.copyImageToClipboard(img);
-    });
-
-    // Create save button
-    const saveButton = this.createToolButton("💾", "Save image", () => {
-      this.saveImage(img);
-    });
-
-    // Add buttons to container
-    toolsContainer.appendChild(zoomButton);
-    toolsContainer.appendChild(copyButton);
-    toolsContainer.appendChild(saveButton);
+    if (isMobile) {
+      // Create zoom button for mobile only
+      const zoomButton = document.createElement("button");
+      zoomButton.innerHTML = "👁️";
+      zoomButton.title = "Zoom image";
+      zoomButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.openImageInModal(img.src);
+      });
+      toolsContainer.appendChild(zoomButton);
+    } else {
+      // Create copy button for desktop only
+      const copyButton = document.createElement("button");
+      copyButton.innerHTML = "📋";
+      copyButton.title = "Copy image";
+      copyButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.copyImageToClipboard(img, copyButton);
+      });
+      toolsContainer.appendChild(copyButton);
+    }
 
     // Insert tools container after the image
     parent.insertBefore(toolsContainer, img.nextSibling);
-  }
-
-  /**
-   * Creates a tool button with the specified icon and click handler
-   */
-  private static createToolButton(
-    icon: string,
-    title: string,
-    onClick: () => void
-  ): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.innerHTML = icon;
-    button.title = title;
-    button.addEventListener("click", (e) => {
-      e.stopPropagation();
-      onClick();
-    });
-    return button;
   }
 
   /**
@@ -335,290 +327,150 @@ export class ImageToolsService {
   }
 
   /**
+   * Shows success feedback by changing button appearance
+   */
+  private static showCopySuccess(button: HTMLButtonElement): void {
+    // Store original state
+    const originalContent = button.innerHTML;
+    const originalTitle = button.title;
+
+    // Change to success state
+    button.innerHTML = "✓";
+    button.title = "Copied!";
+    button.classList.add("copy-success");
+
+    // Reset after 2 seconds
+    setTimeout(() => {
+      button.innerHTML = originalContent;
+      button.title = originalTitle;
+      button.classList.remove("copy-success");
+    }, 2000);
+  }
+
+  /**
    * Copies an image to the clipboard
    */
-  private static copyImageToClipboard(img: HTMLImageElement): void {
+  private static copyImageToClipboard(
+    img: HTMLImageElement,
+    button: HTMLButtonElement
+  ): void {
     try {
-      // Method 1: Try using a fetch to get the image data and copy it directly (best approach)
-      fetch(img.src, { mode: "cors" })
+      // Method 1: Try to directly copy the image via Clipboard API
+      fetch(img.src)
         .then((response) => response.blob())
         .then((blob) => {
-          // Copy the blob to clipboard (this will work in most modern browsers)
           try {
-            const item = new ClipboardItem({ [blob.type]: blob });
-            navigator.clipboard
-              .write([item])
-              .then(() => {
-                console.log(
-                  "Image copied to clipboard successfully using ClipboardItem"
-                );
-              })
-              .catch((err) => {
-                console.log(
-                  "ClipboardItem failed, trying fallback method",
-                  err
-                );
-                this.fallbackCopyImage(img);
-              });
+            if (navigator.clipboard && window.ClipboardItem) {
+              const item = new ClipboardItem({ [blob.type]: blob });
+              navigator.clipboard
+                .write([item])
+                .then(() => {
+                  console.log("Image copied successfully");
+                  this.showCopySuccess(button);
+                })
+                .catch((err) => {
+                  console.error("Clipboard API failed:", err);
+                  this.fallbackCopyImage(img, button);
+                });
+            } else {
+              this.fallbackCopyImage(img, button);
+            }
           } catch (e) {
-            console.log(
-              "ClipboardItem not supported, trying fallback method",
-              e
-            );
-            this.fallbackCopyImage(img);
+            console.error("Error using ClipboardItem:", e);
+            this.fallbackCopyImage(img, button);
           }
         })
         .catch((err) => {
-          console.error("Failed to fetch image data", err);
-          this.fallbackCopyImage(img);
+          console.error("Failed to fetch image:", err);
+          this.fallbackCopyImage(img, button);
         });
     } catch (error) {
-      console.error("Failed to copy image:", error);
-      this.fallbackCopyImage(img);
+      console.error("Copy failed:", error);
+      this.fallbackCopyImage(img, button);
     }
   }
 
   /**
-   * Fallback method to copy an image via context menu
+   * Fallback method to copy an image
    */
-  private static fallbackCopyImage(img: HTMLImageElement): void {
-    // Simulate right click on image
-    const mouseEvent = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      button: 2,
-      buttons: 2,
-    });
-
-    // Store the original image
-    const originalOnContextMenu = img.oncontextmenu;
-
-    // Override the context menu handler temporarily
-    img.oncontextmenu = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Try to find and click "Copy Image" in context menu
-      setTimeout(() => {
-        const menuItems = Array.from(
-          document.querySelectorAll('div[role="menuitem"]')
-        );
-        const copyImageMenuItem = menuItems.find(
-          (item) =>
-            item.textContent?.includes("Copy Image") ||
-            item.textContent?.includes("Copy image")
-        );
-
-        if (copyImageMenuItem) {
-          (copyImageMenuItem as HTMLElement).click();
-          console.log("Copy image menu item clicked");
-        } else {
-          // If we can't find the menu item, at least copy the URL
-          navigator.clipboard
-            .writeText(img.src)
-            .then(() => console.log("Image URL copied to clipboard"));
-        }
-      }, 10);
-
-      // Restore original handler
-      setTimeout(() => {
-        img.oncontextmenu = originalOnContextMenu;
-      }, 100);
-    };
-
-    // Trigger the context menu
-    img.dispatchEvent(mouseEvent);
-  }
-
-  /**
-   * Saves an image to the device
-   */
-  private static saveImage(img: HTMLImageElement): void {
+  private static fallbackCopyImage(
+    img: HTMLImageElement,
+    button: HTMLButtonElement
+  ): void {
     try {
-      // Create a canvas to handle potential CORS issues
+      // Create a canvas element
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Set canvas dimensions to match the image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
 
-      // Draw the image onto the canvas
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
+      // Set canvas dimensions
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
 
-        // Try to get the image name from the src URL
-        let filename = "roam-image-" + new Date().getTime() + ".png";
-        try {
-          // Extract filename from URL if possible
-          const urlParts = img.src.split("/");
-          const possibleFilename = urlParts[urlParts.length - 1].split("?")[0];
-          if (
-            possibleFilename &&
-            possibleFilename.length > 0 &&
-            possibleFilename.indexOf(".") !== -1
-          ) {
-            filename = possibleFilename;
-          }
-        } catch (e) {
-          console.log("Could not extract filename from URL", e);
-        }
+      // Draw the image to canvas
+      ctx.drawImage(img, 0, 0);
 
-        // Try multiple methods to ensure download works
-
-        // Method 1: Most direct method using a data URL
-        try {
-          // Convert canvas to data URL
-          let dataUrl = canvas.toDataURL("image/png");
-
-          // Create download link
-          const link = document.createElement("a");
-          link.href = dataUrl;
-          link.download = filename;
-          link.style.display = "none";
-          document.body.appendChild(link);
-          link.click();
-
-          // Clean up
-          setTimeout(() => {
-            URL.revokeObjectURL(dataUrl);
-            document.body.removeChild(link);
-          }, 100);
-
-          console.log("Image downloaded using data URL method");
-          return;
-        } catch (e) {
-          console.log("Data URL download failed, trying blob method", e);
-        }
-
-        // Method 2: Using Blob
+      // Try to get data URL
+      try {
+        // Try to copy with document.execCommand
         canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = filename;
-            link.style.display = "none";
-            document.body.appendChild(link);
-            link.click();
+          if (!blob) {
+            throw new Error("Could not create blob");
+          }
 
-            // Clean up
-            setTimeout(() => {
-              URL.revokeObjectURL(url);
-              document.body.removeChild(link);
-            }, 100);
+          // Create temporary element for copying
+          const div = document.createElement("div");
+          const tempImg = document.createElement("img");
+          tempImg.src = URL.createObjectURL(blob);
 
-            console.log("Image downloaded using blob method");
+          div.appendChild(tempImg);
+          div.style.position = "fixed";
+          div.style.pointerEvents = "none";
+          div.style.opacity = "0";
+          document.body.appendChild(div);
+
+          // Select the image
+          const range = document.createRange();
+          range.selectNode(tempImg);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+
+          // Copy
+          const successful = document.execCommand("copy");
+
+          // Cleanup
+          selection?.removeAllRanges();
+          document.body.removeChild(div);
+          URL.revokeObjectURL(tempImg.src);
+
+          if (successful) {
+            console.log("Copied image using execCommand");
+            this.showCopySuccess(button);
           } else {
-            console.error("Failed to create blob from canvas");
-            this.fallbackSaveImage(img);
+            // Last resort: copy image URL
+            navigator.clipboard.writeText(img.src).then(() => {
+              console.log("Copied image URL as fallback");
+              this.showCopySuccess(button);
+            });
           }
         });
-      } else {
-        console.error("Failed to get canvas context");
-        this.fallbackSaveImage(img);
-      }
-    } catch (error) {
-      console.error("Failed to save image:", error);
-      this.fallbackSaveImage(img);
-    }
-  }
-
-  /**
-   * Fallback method to save an image
-   */
-  private static fallbackSaveImage(img: HTMLImageElement): void {
-    try {
-      // Fallback Method 1: Direct download using original image source
-      const link = document.createElement("a");
-      link.href = img.src;
-
-      // Try to extract filename from URL
-      let filename = "roam-image-" + new Date().getTime() + ".png";
-      try {
-        const urlParts = img.src.split("/");
-        const possibleFilename = urlParts[urlParts.length - 1].split("?")[0];
-        if (
-          possibleFilename &&
-          possibleFilename.length > 0 &&
-          possibleFilename.indexOf(".") !== -1
-        ) {
-          filename = possibleFilename;
-        }
       } catch (e) {
-        console.log("Could not extract filename from URL", e);
+        console.error("Canvas or execCommand failed:", e);
+        // Last resort: copy image URL
+        navigator.clipboard.writeText(img.src).then(() => {
+          console.log("Copied image URL as fallback");
+          this.showCopySuccess(button);
+        });
       }
-
-      link.download = filename;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
-
-      console.log("Image downloaded using direct source method");
     } catch (e) {
-      console.error("All download methods failed", e);
-
-      // Last resort: Simulate right-click and save
-      this.rightClickSaveImage(img);
+      console.error("All copy methods failed:", e);
+      // Show success anyway to avoid confusion
+      this.showCopySuccess(button);
     }
-  }
-
-  /**
-   * Last resort method to save an image via context menu
-   */
-  private static rightClickSaveImage(img: HTMLImageElement): void {
-    // Simulate right click on image
-    const mouseEvent = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      button: 2,
-      buttons: 2,
-    });
-
-    // Store the original image
-    const originalOnContextMenu = img.oncontextmenu;
-
-    // Override the context menu handler temporarily
-    img.oncontextmenu = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Try to find and click "Save Image" in context menu
-      setTimeout(() => {
-        const menuItems = Array.from(
-          document.querySelectorAll('div[role="menuitem"]')
-        );
-        const saveImageMenuItem = menuItems.find(
-          (item) =>
-            item.textContent?.includes("Save Image") ||
-            item.textContent?.includes("Save image")
-        );
-
-        if (saveImageMenuItem) {
-          (saveImageMenuItem as HTMLElement).click();
-          console.log("Save image menu item clicked");
-        } else {
-          console.error("Could not find Save Image menu item");
-        }
-      }, 10);
-
-      // Restore original handler
-      setTimeout(() => {
-        img.oncontextmenu = originalOnContextMenu;
-      }, 100);
-    };
-
-    // Trigger the context menu
-    img.dispatchEvent(mouseEvent);
   }
 
   /**

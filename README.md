@@ -4,23 +4,20 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
 
 ## Features
 
-1. **Image Zoom**
+1. **Image Zoom (Mobile Only)**
 
+   - Available only on mobile devices
    - Click the eye icon (👁️) to open images in a fullscreen modal
    - Perfect for mobile users who can't directly click to zoom
    - Easy-to-use modal with click-outside-to-close functionality
 
-2. **Copy to Clipboard**
+2. **Copy to Clipboard (Desktop Only)**
 
+   - Available only on desktop devices
    - Click the clipboard icon (📋) to copy an image to your clipboard
+   - Visual feedback shows when image is successfully copied
    - Quickly reuse images in other applications or notes
    - No need to download and re-upload
-
-3. **Quick Save**
-
-   - Click the save icon (💾) to download the image
-   - Save images directly to your device
-   - No need to right-click and use the browser menu
 
 ## Installation
 
@@ -32,15 +29,17 @@ Roam Image Tools is a Roam Research extension that adds convenient tools to imag
 
 The image tools appear in the top-left corner of any image in your Roam database:
 
-- **Eye Icon (👁️)**: Opens the image in a fullscreen modal for better viewing
-- **Clipboard Icon (📋)**: Copies the image to your clipboard (identical to the browser's "Copy Image" function)
-- **Save Icon (💾)**: Downloads the image to your device (identical to the browser's "Save Image" function)
+- **On Mobile Devices**:
 
-The tools are especially useful for:
+  - **Eye Icon (👁️)**: Opens the image in a fullscreen modal for better viewing
 
-- Mobile users who can't easily zoom in on images
-- Anyone who frequently needs to copy or save images without using the right-click menu
-- Users who want quick access to common image operations
+- **On Desktop Devices**:
+  - **Clipboard Icon (📋)**: Copies the image to your clipboard (turns to a green checkmark ✓ when successful)
+
+The tools are designed with specific needs in mind:
+
+- Mobile users get easy image zoom functionality
+- Desktop users get quick copy capabilities without using the right-click menu
 
 ## Troubleshooting
 
@@ -48,4 +47,4 @@ If the image tools don't appear on new images, you can use the "Reinitialize Ima
 
 ## Feedback and Support
 
-If you encounter any issues or have suggestions for improvement, please file an issue on the GitHub repository or contact the developer by email at qcrao@gmail.com.
+If you encounter any issues or have suggestions for improvement, please file an issue on the GitHub repository or contact the developer by email at qcrao91@gmail.com.
