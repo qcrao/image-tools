@@ -104,6 +104,23 @@ export class ImageToolsService {
         background: none;
         border: none;
       }
+
+      .image-zoom-instructions {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 2s;
+      }
+      
+      .image-zoom-instructions.fade {
+        opacity: 0;
+      }
     `;
     document.head.appendChild(styleElement);
 
@@ -239,6 +256,7 @@ export class ImageToolsService {
 
   /**
    * Creates and displays a simple image overlay without using Roam's systems
+   * Supports pinch-to-zoom and pan gestures on mobile
    */
   private static createAndDisplayImageOverlay(src: string): void {
     // Create an overlay div that covers the entire screen
@@ -253,13 +271,27 @@ export class ImageToolsService {
     overlay.style.display = "flex";
     overlay.style.alignItems = "center";
     overlay.style.justifyContent = "center";
+    overlay.style.overflow = "hidden";
+
+    // Create a wrapper for the image to allow for transformations
+    const imageWrapper = document.createElement("div");
+    imageWrapper.style.position = "relative";
+    imageWrapper.style.width = "100%";
+    imageWrapper.style.height = "100%";
+    imageWrapper.style.display = "flex";
+    imageWrapper.style.alignItems = "center";
+    imageWrapper.style.justifyContent = "center";
 
     // Create the image element
     const imgElement = document.createElement("img");
     imgElement.src = src;
-    imgElement.style.maxWidth = "90%";
-    imgElement.style.maxHeight = "90%";
+    imgElement.style.maxWidth = "100%";
+    imgElement.style.maxHeight = "100%";
     imgElement.style.objectFit = "contain";
+    imgElement.style.transform = "scale(1)";
+    imgElement.style.transition = "transform 0.1s ease-out";
+    imgElement.style.transformOrigin = "center";
+    imgElement.style.willChange = "transform";
 
     // Create close button
     const closeButton = document.createElement("div");
@@ -271,6 +303,155 @@ export class ImageToolsService {
     closeButton.style.fontSize = "30px";
     closeButton.style.cursor = "pointer";
     closeButton.style.padding = "10px";
+    closeButton.style.zIndex = "10000";
+
+    // Create instructions for mobile users
+    const instructions = document.createElement("div");
+    instructions.className = "image-zoom-instructions";
+    instructions.textContent = "Pinch to zoom • Double-tap to reset";
+
+    // Add elements to DOM
+    imageWrapper.appendChild(imgElement);
+    overlay.appendChild(imageWrapper);
+    overlay.appendChild(closeButton);
+    overlay.appendChild(instructions);
+    document.body.appendChild(overlay);
+
+    // Fade out instructions after 3 seconds
+    setTimeout(() => {
+      instructions.classList.add("fade");
+    }, 3000);
+
+    // Variables to track touch and zoom state
+    let currentScale = 1;
+    let startScale = 1;
+    let lastTouchDistance = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let translateX = 0;
+    let translateY = 0;
+    let lastTranslateX = 0;
+    let lastTranslateY = 0;
+    let lastTouchTime = 0;
+
+    // Helper function to update transform
+    const updateTransform = () => {
+      // Limit panning when zoomed out
+      if (currentScale <= 1) {
+        translateX = 0;
+        translateY = 0;
+      }
+
+      // Apply transformation
+      imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+    };
+
+    // Handle touch start
+    imageWrapper.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touches = e.touches;
+
+        // Detect double tap
+        const now = new Date().getTime();
+        const doubleTapDelay = 300;
+
+        if (now - lastTouchTime < doubleTapDelay && touches.length === 1) {
+          // Double tap detected - reset zoom
+          currentScale = 1;
+          translateX = 0;
+          translateY = 0;
+          updateTransform();
+          lastTouchTime = 0; // Reset to prevent triple tap
+        } else {
+          lastTouchTime = now;
+
+          if (touches.length === 2) {
+            // Start of pinch - store initial distance
+            const touch1 = touches[0];
+            const touch2 = touches[1];
+            lastTouchDistance = Math.hypot(
+              touch2.clientX - touch1.clientX,
+              touch2.clientY - touch1.clientY
+            );
+            startScale = currentScale;
+          } else if (touches.length === 1 && currentScale > 1) {
+            // Start of drag (only when zoomed in)
+            isDragging = true;
+            startX = touches[0].clientX;
+            startY = touches[0].clientY;
+            lastTranslateX = translateX;
+            lastTranslateY = translateY;
+          }
+        }
+      },
+      { passive: false }
+    );
+
+    // Handle touch move
+    imageWrapper.addEventListener(
+      "touchmove",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touches = e.touches;
+
+        if (touches.length === 2) {
+          // Pinch-to-zoom gesture
+          const touch1 = touches[0];
+          const touch2 = touches[1];
+          const currentDistance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+          );
+
+          // Calculate new scale
+          if (lastTouchDistance > 0) {
+            const delta = currentDistance / lastTouchDistance;
+            currentScale = Math.min(Math.max(startScale * delta, 0.5), 5); // Limit zoom: 0.5x to 5x
+            updateTransform();
+          }
+        } else if (touches.length === 1 && isDragging) {
+          // Pan/drag gesture (only when zoomed in)
+          const deltaX = touches[0].clientX - startX;
+          const deltaY = touches[0].clientY - startY;
+
+          // Apply limits to panning based on zoom level
+          const maxPan = (currentScale - 1) * 200; // Arbitrary limit based on scale
+
+          translateX = Math.min(
+            Math.max(lastTranslateX + deltaX, -maxPan),
+            maxPan
+          );
+          translateY = Math.min(
+            Math.max(lastTranslateY + deltaY, -maxPan),
+            maxPan
+          );
+
+          updateTransform();
+        }
+      },
+      { passive: false }
+    );
+
+    // Handle touch end
+    imageWrapper.addEventListener(
+      "touchend",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Reset flags
+        isDragging = false;
+        lastTouchDistance = 0;
+      },
+      { passive: false }
+    );
 
     // Add click handlers
     closeButton.addEventListener("click", (e) => {
@@ -292,11 +473,6 @@ export class ImageToolsService {
       e.preventDefault();
       e.stopPropagation();
     });
-
-    // Add elements to DOM
-    overlay.appendChild(imgElement);
-    overlay.appendChild(closeButton);
-    document.body.appendChild(overlay);
 
     // Add keyboard support
     const keyHandler = (e: KeyboardEvent) => {
