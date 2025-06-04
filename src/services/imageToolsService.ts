@@ -204,10 +204,21 @@ export class ImageToolsService {
       const zoomButton = document.createElement("button");
       zoomButton.innerHTML = "👁️";
       zoomButton.title = "Zoom image";
-      zoomButton.addEventListener("click", (e) => {
+      zoomButton.addEventListener("mousedown", (e) => {
+        // Prevent default and stop propagation on mousedown (happens before click)
+        e.preventDefault();
         e.stopPropagation();
-        this.openImageInModal(img.src);
       });
+
+      zoomButton.addEventListener("click", (e) => {
+        // Also prevent default and stop propagation on click
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Instead of using the original image, load a new one directly
+        this.createAndDisplayImageOverlay(img.src);
+      });
+
       toolsContainer.appendChild(zoomButton);
     } else {
       // Create copy button for desktop only
@@ -216,6 +227,7 @@ export class ImageToolsService {
       copyButton.title = "Copy image";
       copyButton.addEventListener("click", (e) => {
         e.stopPropagation();
+        e.preventDefault();
         this.copyImageToClipboard(img, copyButton);
       });
       toolsContainer.appendChild(copyButton);
@@ -226,100 +238,70 @@ export class ImageToolsService {
   }
 
   /**
-   * Opens an image in a modal for zooming
+   * Creates and displays a simple image overlay without using Roam's systems
    */
-  private static openImageInModal(src: string): void {
-    // Find the original image in the DOM
-    const allImages = Array.from(
-      document.querySelectorAll(".roam-article img")
-    ) as HTMLImageElement[];
-    const targetImage = allImages.find((img) => img.src === src);
+  private static createAndDisplayImageOverlay(src: string): void {
+    // Create an overlay div that covers the entire screen
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
+    overlay.style.zIndex = "9999";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
 
-    if (targetImage) {
-      // Remove our click handler temporarily to avoid infinite loops
-      const originalClickHandlers = targetImage.onclick;
-      targetImage.onclick = null;
-
-      // Create and dispatch a native mouse click event
-      const clickEvent = new MouseEvent("click", {
-        view: window,
-        bubbles: true,
-        cancelable: true,
-        clientX:
-          targetImage.getBoundingClientRect().left +
-          targetImage.offsetWidth / 2,
-        clientY:
-          targetImage.getBoundingClientRect().top +
-          targetImage.offsetHeight / 2,
-      });
-
-      // Dispatch the click event
-      targetImage.dispatchEvent(clickEvent);
-
-      // Restore our click handler after a short delay
-      setTimeout(() => {
-        targetImage.onclick = originalClickHandlers;
-      }, 100);
-    } else {
-      // Fallback to our custom implementation if image not found
-      this.showCustomZoomModal(src);
-    }
-  }
-
-  /**
-   * Shows custom zoom modal for when Roam's native zoom doesn't work
-   */
-  private static showCustomZoomModal(src: string): void {
-    // Preload image to improve performance
-    const preloadImage = new Image();
-    preloadImage.src = src;
-
-    // Create modal container
-    const modal = document.createElement("div");
-    modal.className = "image-zoom-modal";
+    // Create the image element
+    const imgElement = document.createElement("img");
+    imgElement.src = src;
+    imgElement.style.maxWidth = "90%";
+    imgElement.style.maxHeight = "90%";
+    imgElement.style.objectFit = "contain";
 
     // Create close button
-    const closeButton = document.createElement("button");
-    closeButton.className = "image-zoom-close";
+    const closeButton = document.createElement("div");
     closeButton.innerHTML = "×";
-    closeButton.addEventListener("click", () => {
-      document.body.removeChild(modal);
+    closeButton.style.position = "absolute";
+    closeButton.style.top = "20px";
+    closeButton.style.right = "20px";
+    closeButton.style.color = "white";
+    closeButton.style.fontSize = "30px";
+    closeButton.style.cursor = "pointer";
+    closeButton.style.padding = "10px";
+
+    // Add click handlers
+    closeButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.removeChild(overlay);
     });
 
-    // Create image element
-    const img = document.createElement("img");
-    if (preloadImage.complete) {
-      // Image already loaded, use it immediately
-      img.src = src;
-      modal.appendChild(img);
-      modal.appendChild(closeButton);
-      document.body.appendChild(modal);
-    } else {
-      // Show loading indicator
-      modal.innerHTML =
-        '<div style="color: white; font-size: 24px;">Loading image...</div>';
-      document.body.appendChild(modal);
-
-      // When image is loaded, update the modal
-      preloadImage.onload = () => {
-        img.src = src;
-        modal.innerHTML = "";
-        modal.appendChild(img);
-        modal.appendChild(closeButton);
-      };
-    }
-
-    // Add click handler to close modal when clicking outside the image
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.removeChild(overlay);
       }
     });
 
-    // Add keyboard support for closing
+    // Prevent any events from bubbling through to Roam
+    overlay.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    // Add elements to DOM
+    overlay.appendChild(imgElement);
+    overlay.appendChild(closeButton);
+    document.body.appendChild(overlay);
+
+    // Add keyboard support
     const keyHandler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        document.body.removeChild(modal);
+        document.body.removeChild(overlay);
         document.removeEventListener("keydown", keyHandler);
       }
     };
